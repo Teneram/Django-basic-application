@@ -1,0 +1,73 @@
+/* Style the Create User button */
+.create-user-button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+/* Style the Create User form */
+.create-user-form {
+  display: none; /* Hide the form by default */
+  padding: 10px;
+  background-color: #f2f2f2;
+  border-radius: 5px;
+}
+
+/* Show the Create User form when the button is clicked */
+.create-user-button:focus + .create-user-form {
+  display: block;
+}
+
+
+/* Style the Edit Profile button */
+.update-user-button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+/* Style the Update User form */
+.update-user-form {
+  display: none; /* Hide the form by default */
+  padding: 10px;
+  background-color: #f2f2f2;
+  border-radius: 5px;
+}
+
+/* Show the Update User form when the button is clicked */
+.update-user-button:focus + .update-user-form {
+  display: block;
+}
+
+#update-user-toggle {
+  display: block;
+  margin: 0 auto;
+}
+
+
+/* Style the User Profile */
+.gradient-custom-2 {
+/* fallback for old browsers */
+background: #fbc2eb;
+
+/* Chrome 10-25, Safari 5.1-6 */
+background: -webkit-linear-gradient(to right, rgba(251, 194, 235, 1), rgba(166, 193, 238, 1));
+
+/* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+background: linear-gradient(to right, rgba(251, 194, 235, 1), rgba(166, 193, 238, 1))
+}
+

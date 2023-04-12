@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load static %}
+
+<nav class="navbar bg-body-tertiary">
+  <div class="container-fluid d-flex justify-content-center">
+    <a class="navbar-brand" href="#">
+      <img src="{% static 'images/djangogramm.png' %}" alt="" width="30" height="30" class="d-inline-block align-text-top me-2">
+      <span class="align-middle">Djangogramm</span>
+    </a>
+
+  </div>
+</nav>
+
+    <div class="container my-5">
+      <h1 class="text-center">User List</h1>
+
+      <div class="row row-cols-1 row-cols-md-3 g-4 mt-5">
+        {% if users %}
+          {% for user in users %}
+            <div class="col">
+              <div class="card h-100">
+                <img src="{{ user.avatar }}" class="card-img-top mx-auto" style="height: 250px; width: 250px;" alt="Avatar">
+                <div class="card-body">
+                  <h2 class="card-title"><a href="/users/{{ user.user_id }}">{{ user.username }}</a></h2>
+                  <h3>Biography</h3>
+                  <p>{{ user.biography|linebreaksbr|slice:":70"|add:"..." }}</p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No users found.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.2/js/bootstrap.min.js"></script>
+
+
+{% endblock %}

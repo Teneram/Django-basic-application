@@ -1,0 +1,14 @@
+# Default ignored files
+
+/.idea
+*.db
+*.log
+*.pyc
+__pycache__
+.coverage
+dist
+.pytest_cache
+.mypy_cache
+!*/example.db
+__pycache__/
+.env

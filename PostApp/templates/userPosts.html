@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load static %}
+<nav class="navbar bg-body-tertiary">
+  <div class="container-fluid d-flex justify-content-center">
+    <a class="navbar-brand" href="#">
+      <img src="{% static 'images/djangogramm.png' %}" alt="" width="30" height="30" class="d-inline-block align-text-top me-2">
+      <span class="align-middle">Djangogramm</span>
+    </a>
+
+    <div class="ml-auto">
+      <a href="/users/{{ user.user_id }}" class="btn btn-lg btn-light">Home</a>
+    </div>
+  </div>
+</nav>
+
+<section class="h-100 gradient-custom-2" style="min-height: calc(100vh - 70px); margin-bottom: 20px;">
+
+  <div class="container py-5">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col col-lg-9 col-xl-7">
+        <div class="card">
+
+          {% if posts %}
+            <ul>
+              {% for post in posts %}
+                <div class="mx-auto" style="margin-bottom: 5px;">
+                  <a href="/users/{{ post.user }}/posts/{{ post.post_id }}">
+                    <img src="{{ post.images.0.image }}"
+                      alt="Generic placeholder image" width="600" height="600">
+                  </a>
+                </div>
+
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="position-absolute bottom-0 start-50 translate-middle-x">
+    <a href="/users/{{ user.user_id }}/posts/create" class="btn btn-lg btn-secondary" style="width: 100%;">Create new post</a>
+  </div>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "task-12-create-basic-application"
+version = "0.1.0"
+description = ""
+authors = ["Roman Savchneko <kriateddd@gmail.com>"]
+readme = "README.md"
+packages = [{include = "task_12_create_basic_application"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+django = "^4.2"
+faker = "^18.4.0"
+djangorestframework = "^3.14.0"
+pillow = "^9.5.0"
+factory-boy = "^3.2.1"
+halo = "^0.0.31"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.2.0"
+black = "^23.3.0"
+isort = "^5.12.0"
+flake8 = "^6.0.0"
+pre-commit = "^3.2.2"
+pytest = "^7.3.0"
+pytest-mock = "^3.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

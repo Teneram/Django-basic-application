@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load static %}
+
+<section class="gradient-custom-2">
+  <div class="container py-5">
+    <div class="row h-100 align-items-center justify-content-center">
+      <div class="col-md-8 col-lg-6 col-xl-5">
+        <div class="card">
+          <div class="rounded-top text-white d-flex flex-row" style="background-color: #000; height:200px;">
+            <div class="ms-4 mt-5 d-flex flex-column" style="width: 150px;">
+              <img src="{{ user.avatar }}"
+                alt="Generic placeholder image" class="img-fluid img-thumbnail mt-4 mb-2"
+                style="width: 150px; z-index: 1">
+              <div data-mdb-ripple-color="dark" style="z-index: 1;">
+                <a href="/users/{{ user.user_id }}/edit" class="btn btn-info" style="width: 100%;">Edit profile</a>
+              </div>
+            </div>
+            <div class="ms-3" style="margin-top: 130px;">
+              <h5>{{ user.username }}</h5>
+            </div>
+          </div>
+          <div class="p-4 text-black" style="background-color: #f8f9fa;">
+
+          </div>
+          <div class="card-body p-4 text-black">
+            <div class="mb-5">
+              <p class="lead fw-normal mb-1">Email</p>
+              <div class="p-4" style="background-color: #f8f9fa;">
+                <p class="font-italic mb-1">{{ user.email }}</p>
+              </div>
+              <p class="lead fw-normal mb-1">Biography</p>
+              <div class="p-4" style="background-color: #f8f9fa;">
+                <p class="font-italic mb-1">{{ user.biography }}</p>
+              </div>
+            </div>
+
+          <div class="d-flex justify-content-center my-3">
+            <a href="/users/{{ user.user_id }}/posts" class="btn btn-lg btn-secondary" style="width: 20%;">Posts</a>
+          </div>
+
+          <div class="d-flex justify-content-center my-3">
+            <a href="/users" class="btn btn-lg btn-secondary" style="width: 60%;">Search users</a>
+          </div>
+
+
+          <div class="d-flex justify-content-center my-3">
+            <form id="delete-user-form" method="POST" action="{% url 'user_profile' user.user_id %}">
+              {% csrf_token %}
+              <input type="hidden" name="_method" value="DELETE">
+              <button type="submit" class="btn btn-danger" style="width: 100%;">Delete account</button>
+            </form>
+          </div>
+
+          <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+          <script>
+            $(document).ready(function() {
+              $('#delete-user-form').submit(function(event) {
+                event.preventDefault();
+                $.ajax({
+                  url: $(this).attr('action'),
+                  method: 'DELETE',
+                  headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                  success: function() {
+                    // Redirect to the registration page after deleting the account
+                    window.location.href = "{% url 'home' %}";
+                  }
+                });
+              });
+            });
+          </script>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

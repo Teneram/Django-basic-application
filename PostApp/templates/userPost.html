@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load static %}
+
+<head>
+	<title>Posts</title>
+	<link href="https://fonts.googleapis.com/css?family=Raleway:400,500i,700,800" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700,900" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+	<link rel="stylesheet" type="text/css" href="{% static 'css/gallery.css' %}">
+
+</head>
+<body>
+
+<div class="container">
+
+<div class="title" style="text-align: center">
+  <h1>Posts</h1>
+</div>
+
+<hr>
+	<div class="row">
+
+		{% if post %}
+            <ul>
+              {% for image in post.images %}
+                <div class="mx-auto" style="margin-bottom: 5px;">
+					<img src="{{ image.image }}"
+					  alt="Generic placeholder image" style="max-width: 100%; max-height: 100%;">
+                </div>
+              {% endfor %}
+            </ul>
+          {% endif %}
+<!--		<div class="description" style="font-size: 18px;">{{ post.description }}</div>-->
+
+		<div class="description" style="font-size: 18px;">
+			<p>{{ post.description }}</p>
+			<div style="font-size: 14px;">
+				<p>Created at: {{ post.created_at }}</p>
+			</div>
+
+			<div class="d-flex justify-content-center my-3">
+				<button type="button" class="btn btn-secondary" id="edit-button" style="width: 40%;">Edit post</button>
+			</div>
+			<form id="edit-form" style="display: none;">
+				{% csrf_token %}
+				<textarea name="description">{{ post.description }}</textarea>
+				<button type="submit">Save</button>
+			</form>
+		</div>
+
+		<div class="d-flex justify-content-center my-3">
+		  <form action="{% url 'user_posts' post.user %}">
+			<button type="submit" class="btn btn-primary me-5">Back to posts</button>
+		  </form>
+
+		  <form id="delete-post-form" method="POST" action="{% url 'user_post_details' post.user post.post_id %}">
+			{% csrf_token %}
+			<input type="hidden" name="_method" value="DELETE">
+			<button type="submit" class="btn btn-danger ms-5" style="width: 100%; margin-left: 20px;">Delete post</button>
+		  </form>
+		</div>
+
+
+		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+		<script>
+		  $(document).ready(function() {
+			$('#delete-post-form').submit(function(event) {
+			  event.preventDefault();
+			  $.ajax({
+				url: $(this).attr('action'),
+				method: 'DELETE',
+				headers: {'X-CSRFToken': '{{ csrf_token }}'},
+				success: function() {
+				  // Redirect to the post list page after deleting the post
+				  window.location.href = "{% url 'user_posts' post.user %}";
+				}
+			  });
+			});
+		  });
+		</script>
+
+		<script>
+			$(document).ready(function() {
+				$('#edit-button').click(function() {
+					$('.description p').hide();
+					$('#edit-form').show();
+				});
+
+				$('#edit-form').submit(function(event) {
+					event.preventDefault();
+					$.ajax({
+						url: $(this).attr('action'),
+						method: 'PATCH',
+						data: JSON.stringify({
+							csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+							description: $('#edit-form textarea[name=description]').val()
+						}),
+						contentType: 'application/json',
+						success: function() {
+							// Reload the page after saving the edited description
+							location.reload();
+						}
+					});
+				});
+			});
+
+		</script>
+
+	</div>
+</div>
+
+</body>
+
+
+{% endblock %}

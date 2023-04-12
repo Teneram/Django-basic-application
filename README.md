@@ -1,1 +1,1 @@
-# Django-basic-application
+# Task 12 - Create basic application
