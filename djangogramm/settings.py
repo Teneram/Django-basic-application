@@ -30,7 +30,7 @@ SECRET_KEY = "django-insecure-k@fb7pk78bc59qvoauhxv#kmx$57n8l2r6z=28*o0=z0l188jp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['arison.pythonanywhere.com']
 
 
 # Application definition
@@ -86,14 +86,24 @@ WSGI_APPLICATION = "djangogramm.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "djangogramm",
+#         "USER": "postgres",
+#         "PASSWORD": "qqq1994QQQ",
+#         "HOST": "arison.postgres.pythonanywhere-services.com",
+#         "PORT": "10667",
+#     }
+# }
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "djangogramm",
-        "USER": "postgres",
-        "PASSWORD": "qqq1994QQQ",
-        "HOST": "localhost",
-        "PORT": "5432",
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'Arison$mydatabase',
+        'USER': 'Arison',
+        'PASSWORD': 'qwe1994QWE',
+        'HOST': 'Arison.mysql.pythonanywhere-services.com'
     }
 }
 
@@ -133,6 +143,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+STATIC_ROOT = "/home/Arison/Django-basic-application/static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
