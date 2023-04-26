@@ -14,8 +14,6 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
-# MEDIA_URL = "Media/"
-# MEDIA_ROOT = os.path.join(BASE_DIR, "Media")
 
 MEDIA_URL = ""
 MEDIA_ROOT = os.path.join(BASE_DIR, "Media")
@@ -30,7 +28,7 @@ SECRET_KEY = "django-insecure-k@fb7pk78bc59qvoauhxv#kmx$57n8l2r6z=28*o0=z0l188jp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['arison.pythonanywhere.com']
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -47,6 +45,7 @@ INSTALLED_APPS = [
     "UserApp.apps.UserappConfig",
     "PostApp.apps.PostsappConfig",
     "django_cleanup.apps.CleanupConfig",  # added to manage mediafiles
+    'humanize',
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -86,24 +85,14 @@ WSGI_APPLICATION = "djangogramm.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "djangogramm",
-#         "USER": "postgres",
-#         "PASSWORD": "qqq1994QQQ",
-#         "HOST": "arison.postgres.pythonanywhere-services.com",
-#         "PORT": "10667",
-#     }
-# }
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'Arison$mydatabase',
-        'USER': 'Arison',
-        'PASSWORD': 'qwe1994QWE',
-        'HOST': 'Arison.mysql.pythonanywhere-services.com'
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "djangogramm",
+        "USER": "postgres",
+        "PASSWORD": "qqq1994QQQ",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -144,8 +133,6 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-STATIC_ROOT = "/home/Arison/Django-basic-application/static/"
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
@@ -165,3 +152,15 @@ REST_FRAMEWORK = {
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "UserApp/static"),
 ]
+
+
+# Emailing settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_FROM = 'kriateddd@gmail.com'
+EMAIL_HOST_USER = 'kriateddd@gmail.com'
+EMAIL_HOST_PASSWORD = 'qbcpoghqiuptsfsz'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+PASSWORD_RESET_TIMEOUT = 14400

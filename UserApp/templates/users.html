@@ -4,12 +4,31 @@
 
 {% load static %}
 
+{% if messages %}
+<div class="alert alert-info">
+  <ul>
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 <nav class="navbar bg-body-tertiary">
   <div class="container-fluid d-flex justify-content-center">
     <a class="navbar-brand" href="#">
       <img src="{% static 'images/djangogramm.png' %}" alt="" width="30" height="30" class="d-inline-block align-text-top me-2">
       <span class="align-middle">Djangogramm</span>
     </a>
+
+    <div class="ml-auto">
+      <a href="/users/{{ current_user.user_id }}" class="btn btn-lg btn-light">Home</a>
+    </div>
+
+    <form class="d-flex" role="search" onsubmit="submitSearchForm(event)">
+      <input class="form-control me-2" type="search" placeholder="Search user" aria-label="Search" id="search-input">
+      <button class="btn btn-outline-success" type="submit">Search</button>
+    </form>
 
   </div>
 </nav>
@@ -37,8 +56,18 @@
       </div>
     </div>
 
-    <!-- Bootstrap JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.2/js/bootstrap.min.js"></script>
+
+    <script>
+      function submitSearchForm(event) {
+        event.preventDefault(); // Prevents the form from submitting normally
+        const searchQuery = document.getElementById('search-input').value;
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('search', searchQuery);
+        window.location.href = currentUrl.toString();
+      }
+    </script>
+
 
 
 {% endblock %}

@@ -12,3 +12,4 @@ dist
 !*/example.db
 __pycache__/
 .env
+Media/

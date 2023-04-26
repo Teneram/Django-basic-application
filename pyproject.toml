@@ -17,6 +17,7 @@ halo = "^0.0.31"
 psycopg2 = "^2.9.6"
 django-cors-headers = "^3.14.0"
 django-cleanup = "^7.0.0"
+humanize = "^4.6.0"
 
 
 [tool.poetry.group.dev.dependencies]
