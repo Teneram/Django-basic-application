@@ -1,1 +1,3 @@
-# Task 12 - Create basic application
+# Djangogramm
+
+## basic Django application (in progress...)
