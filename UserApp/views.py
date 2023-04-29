@@ -39,7 +39,7 @@ def home(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f"Hello, {user.username}! You have been logged in")
-                return redirect("users_list")
+                return redirect("all_posts")
         else:
             for key, error in list(form.errors.items()):
                 messages.error(request, error)
@@ -90,7 +90,6 @@ def registration(request):
             # form is not valid, display error messages
             for field, errors in form.errors.items():
                 for error in errors:
-                    # messages.error(request, f"{field}: {error}")
                     messages.error(request, f"Error: {error}")
     else:
         form = SignupForm()

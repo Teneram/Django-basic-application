@@ -4,25 +4,16 @@
 
 {% load static %}
 
-{% if messages %}
-<div class="alert alert-info">
-  <ul>
-    {% for message in messages %}
-    <li>{{ message }}</li>
-    {% endfor %}
-  </ul>
-</div>
-{% endif %}
 
 <nav class="navbar bg-body-tertiary">
   <div class="container-fluid d-flex justify-content-center">
-    <a class="navbar-brand" href="#">
+    <a class="navbar-brand" href="/posts">
       <img src="{% static 'images/djangogramm.png' %}" alt="" width="30" height="30" class="d-inline-block align-text-top me-2">
       <span class="align-middle">Djangogramm</span>
     </a>
 
     <div class="ml-auto">
-      <a href="/users/{{ current_user.user_id }}" class="btn btn-lg btn-light">Home</a>
+      <a href="/users/{{ current_user.user_id }}" class="btn btn-lg btn-light">Profile</a>
     </div>
 
     <form class="d-flex" role="search" onsubmit="submitSearchForm(event)">

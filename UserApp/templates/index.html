@@ -6,13 +6,14 @@
 
 {% if messages %}
 <div class="alert alert-info">
-  <ul>
+  <ul style="list-style:none;">
     {% for message in messages %}
-    <li>{{ message }}</li>
+    <li>{{ message | striptags }}</li>
     {% endfor %}
   </ul>
 </div>
 {% endif %}
+
 
 <body class="text-center">
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load static %}
+
+{% if messages %}
+<div class="alert alert-info">
+  <ul style="list-style:none;">
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<head>
+	<title>Posts</title>
+	<link href="https://fonts.googleapis.com/css?family=Raleway:400,500i,700,800" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700,900" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+	<style>
+		.like-container {
+			display: flex;
+			align-items: center;
+		}
+	</style>
+
+</head>
+
+
+<body>
+
+  <nav class="navbar bg-body-tertiary">
+    <div class="container-fluid d-flex justify-content-center">
+      <a class="navbar-brand" href="/posts">
+        <img src="{% static 'images/djangogramm.png' %}" alt="" width="30" height="30" class="d-inline-block align-text-top me-2">
+        <span class="align-middle">Djangogramm</span>
+      </a>
+
+      <div class="ml-auto">
+        <a href="/users/{{ active_user.user_id }}" class="btn btn-lg btn-light">Profile</a>
+      </div>
+
+      <div class="ml-auto">
+        <a href="/users" class="btn btn-lg btn-light" style="width: 100%;">Search users</a>
+      </div>
+
+      <form class="d-flex" role="search" onsubmit="submitSearchForm(event)">
+        <input class="form-control me-2" type="search" placeholder="Search post" aria-label="Search" id="search-input">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+      </form>
+
+    </div>
+  </nav>
+
+  <div class="container">
+  <hr>
+	<div class="row">
+
+      {% for post in posts_data %}
+      <a href="{% url 'user_profile' id=post.user_id %}" class="text-decoration-none text-dark">
+      <div class="h2 mb-2 font-weight-bold">{{ post.username }}</div>
+    </a>
+
+      <div id="carouselExampleDark{{ forloop.counter }}" class="carousel carousel-dark slide">
+        <div class="carousel-indicators">
+          <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+          <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="1" aria-label="Slide 2"></button>
+          <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner">
+        {% for image in post.images %}
+          {% if forloop.counter == 1 %}
+          <div class="carousel-item active" data-bs-interval="10000">
+            <img src="{{ image.image.url }}" class="d-block w-100" alt="Wild Landscape"/>
+          </div>
+          {% else %}
+          <div class="carousel-item" data-bs-interval="2000">
+            <img src="{{ image.image.url }}" class="d-block w-100" alt="Camera"/>
+          </div>
+          {% endif %}
+        {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark{{ forloop.counter }}" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark{{ forloop.counter }}" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+
+
+      <div class="description" style="font-size: 18px;">
+        <div>
+          <span class="d-block text-truncate" style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;" id="post-description">{{ post.description }}</span>
+          <span class="show-all" style="display:none;">
+            {{ post.description }}
+          </span>
+          {% if post.description|length > 300 %}
+            <a href="#" id="show-more">Show All</a>
+          {% endif %}
+        </div>
+
+        <div style="font-size: 14px;">
+            <p> {{ post.created_at }}</p>
+        </div>
+
+        <div class="like-container">
+          <form action="" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="post_id" value="{{ post.post_id }}">
+            {% if post.post_liked %}
+            <button style="border:none; background:none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="red" class="bi bi-heart-fill" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+              </svg>
+            </button>
+            {% else %}
+            <button style="border:none; background:none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+                <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+              </svg>
+            </button>
+            {% endif %}
+          </form>
+
+          <p class="num-of-likes" style="margin-left: 5px;">{{ post.num_likes }}</p>
+        </div>
+      </div>
+
+      {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    var showAllBtn = document.getElementById("show-more");
+    var descriptionText = document.getElementById("post-description");
+    var showAllText = document.querySelector(".show-all");
+
+    showAllBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      descriptionText.style.display = "none";
+      showAllText.style.display = "inline";
+      showAllBtn.style.display = "none";
+    });
+  </script>
+
+</body>
+
+
+{% endblock %}

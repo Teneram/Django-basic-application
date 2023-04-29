@@ -83,7 +83,7 @@ def user_post_details(request, user_id, post_id):
 
     elif request.method == "POST":
         if request.user.is_authenticated:
-            like_post(request, user_id=user_id, post_id=post_id, active_user=active_user)
+            like_post(request, post=post, user_id=user_id, post_id=post_id, active_user=active_user)
             return redirect('user_post_details', user_id=user_id, post_id=post_id)
 
     elif request.method == "PATCH":
@@ -102,15 +102,58 @@ def user_post_details(request, user_id, post_id):
 
 
 @login_required(login_url='/')
-def like_post(request, user_id, post_id, active_user):
-    post = get_object_or_404(Posts, post_id=post_id, user_id=user_id)
-
+# def like_post(request, active_user, user_id=None, post_id=None):
+def like_post(request, post, active_user, user_id=None, post_id=None):
+    # post = get_object_or_404(Posts, post_id=post_id, user_id=user_id)
+    print("Entered like post function")
     try:
         post_like = PostLike.objects.get(post=post, user=active_user)
         post_like.delete()
     except PostLike.DoesNotExist:
         post_like = PostLike.objects.create(post=post, user=active_user)
         post_like.save()
-    return redirect('user_post_details', user_id=user_id, post_id=post_id)
+
+    if post_id or user_id:
+        return redirect('user_post_details', user_id=user_id, post_id=post_id)
+    else:
+        return redirect('home')
 
 
+@login_required(login_url='/')
+@csrf_exempt
+def all_posts(request):
+    active_user = Users.objects.get(username=request.user.username)
+
+    if request.method == "GET":
+
+        posts_data = []
+        # users = Users.objects.all()
+        posts = Posts.objects.all().order_by("-created_at")
+
+        for post in posts:
+            # serializer = PostSerializer(post)
+            likes = PostLike.objects.filter(post=post)
+            num_likes = likes.count()
+            liked = likes.filter(user=active_user).exists()
+
+            post_data = {
+                "user_id": post.user.user_id,
+                "post_id": post.post_id,
+                "username": post.user.username,
+                "description": post.description,
+                "images": post.images.all,
+                "created_at": post.created_at_formatted(),
+                "post_liked": liked,
+                "num_likes": num_likes,
+                "active_user": active_user
+            }
+            posts_data.append(post_data)
+
+        return render(request, "allPosts.html", {"posts_data": posts_data, "active_user": active_user})
+
+    elif request.method == "POST":
+        post_id = request.POST.get('post_id')
+        post = Posts.objects.get(post_id=post_id)
+        if request.user.is_authenticated:
+            like_post(request, post=post, active_user=active_user)
+            return redirect('all_posts')
