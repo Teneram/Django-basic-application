@@ -1,3 +1,5 @@
+import re
+
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -53,6 +55,12 @@ class PostSerializer(serializers.ModelSerializer):
 
         # Update post description
         instance.description = validated_data.get("description", instance.description)
+
+        # Update post tags based on the updated description
+        hashtags = re.findall(r'#(\w+)', instance.description)
+        instance.tags.set(hashtags)
+
         instance.save()
 
         return instance
+

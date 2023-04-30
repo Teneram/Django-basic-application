@@ -48,7 +48,7 @@
       </div>
 
       <form class="d-flex" role="search" onsubmit="submitSearchForm(event)">
-        <input class="form-control me-2" type="search" placeholder="Search post" aria-label="Search" id="search-input">
+        <input class="form-control me-2" type="search" placeholder="Search post by hashtag" aria-label="Search" id="search-input">
         <button class="btn btn-outline-success" type="submit">Search</button>
       </form>
 
@@ -61,8 +61,8 @@
 
       {% for post in posts_data %}
       <a href="{% url 'user_profile' id=post.user_id %}" class="text-decoration-none text-dark">
-      <div class="h2 mb-2 font-weight-bold">{{ post.username }}</div>
-    </a>
+        <div class="h2 mb-2 font-weight-bold">{{ post.username }}</div>
+      </a>
 
       <div id="carouselExampleDark{{ forloop.counter }}" class="carousel carousel-dark slide">
         <div class="carousel-indicators">
@@ -82,28 +82,39 @@
           </div>
           {% endif %}
         {% endfor %}
+
         </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark{{ forloop.counter }}" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark{{ forloop.counter }}" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Next</span>
-        </button>
-      </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark{{ forloop.counter }}" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark{{ forloop.counter }}" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
 
 
       <div class="description" style="font-size: 18px;">
-        <div>
-          <span class="d-block text-truncate" style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;" id="post-description">{{ post.description }}</span>
-          <span class="show-all" style="display:none;">
-            {{ post.description }}
-          </span>
-          {% if post.description|length > 300 %}
-            <a href="#" id="show-more">Show All</a>
-          {% endif %}
-        </div>
+
+        <p id="post-description-{{ forloop.counter }}">{{ post.description }}</p>
+
+        <script>
+        // Get the post description element
+        var descriptionElem = document.getElementById("post-description-{{ forloop.counter }}");
+
+        // Get the text content of the post description element
+        var description = descriptionElem.textContent;
+
+        // Create a new HTML string with hashtags replaced by links
+        var html = description.replace(/#\w+/g, function(match) {
+          var hashtag = match.substr(1);
+          return '<a href="' + window.location.origin + '/posts/tags/' + hashtag + '">' + match + '</a>';
+        });
+
+        // Set the innerHTML of the post description element to the new HTML string
+        descriptionElem.innerHTML = html;
+        </script>
 
         <div style="font-size: 14px;">
             <p> {{ post.created_at }}</p>
@@ -136,20 +147,16 @@
     </div>
   </div>
 
-  <script>
-    var showAllBtn = document.getElementById("show-more");
-    var descriptionText = document.getElementById("post-description");
-    var showAllText = document.querySelector(".show-all");
-
-    showAllBtn.addEventListener("click", function(e) {
-      e.preventDefault();
-      descriptionText.style.display = "none";
-      showAllText.style.display = "inline";
-      showAllBtn.style.display = "none";
-    });
-  </script>
-
 </body>
 
+<script>
+  function submitSearchForm(event) {
+    event.preventDefault();
+    var query = document.getElementById("search-input").value.trim();
+    if (query) {
+      window.location.href = "/posts/tags/" + query;
+    }
+  }
+</script>
 
 {% endblock %}

@@ -24,6 +24,15 @@
 		}
 	</style>
 
+	<style>
+	  /* Style the links for hashtags */
+	  #post-description a {
+		color: blue;
+		text-decoration: none;
+	  }
+
+	</style>
+
 </head>
 
 
@@ -68,7 +77,9 @@
           {% endif %}
 
 		<div class="description" style="font-size: 18px;">
-			<p>{{ post.description }}</p>
+
+			<p id="post-description">{{ post.description }}</p>
+
 			<div style="font-size: 14px;">
 				<p>Created at: {{ data }}</p>
 			</div>
@@ -154,7 +165,6 @@
 		  });
 		</script>
 
-
 		<script>
 			$(document).ready(function() {
 				$('#edit-button').click(function() {
@@ -180,6 +190,23 @@
 				});
 			});
 
+		</script>
+
+		<script>
+		  // Get the post description element
+		  var descriptionElem = document.getElementById("post-description");
+
+		  // Get the text content of the post description element
+		  var description = descriptionElem.textContent;
+
+		  // Create a new HTML string with hashtags replaced by links
+		  var html = description.replace(/#\w+/g, function(match) {
+			var hashtag = match.substr(1);
+			return '<a href="' + window.location.origin + '/posts/tags/' + hashtag + '">' + match + '</a>';
+		  });
+
+		  // Set the innerHTML of the post description element to the new HTML string
+		  descriptionElem.innerHTML = html;
 		</script>
 
 	</div>

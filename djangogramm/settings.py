@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "PostApp.apps.PostsappConfig",
     "django_cleanup.apps.CleanupConfig",  # added to manage mediafiles
     'humanize',
+    'taggit',
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True

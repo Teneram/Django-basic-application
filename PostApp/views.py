@@ -1,12 +1,14 @@
 import json
+import re
 from http import HTTPStatus
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
+from taggit.models import Tag
 
 from PostApp.serializers import PostSerializer
 from UserApp.models import Users
@@ -41,8 +43,15 @@ def user_posts_create(request, user_id):
         return render(request, "createPost.html", {"user": user})
 
     elif request.method == "POST":
-        post = Posts(user=user, description=request.POST["description"])
+        description = request.POST["description"]
+        post = Posts(user=user, description=description)
         post.save()
+
+        hashtags = re.findall(r'#(\w+)', description)
+
+        for tag_name in hashtags:
+            tag, created = Tag.objects.get_or_create(name=tag_name)
+            post.tags.add(tag)
 
         # Save post images
         images = request.FILES.getlist("images")
@@ -102,10 +111,7 @@ def user_post_details(request, user_id, post_id):
 
 
 @login_required(login_url='/')
-# def like_post(request, active_user, user_id=None, post_id=None):
 def like_post(request, post, active_user, user_id=None, post_id=None):
-    # post = get_object_or_404(Posts, post_id=post_id, user_id=user_id)
-    print("Entered like post function")
     try:
         post_like = PostLike.objects.get(post=post, user=active_user)
         post_like.delete()
@@ -127,11 +133,9 @@ def all_posts(request):
     if request.method == "GET":
 
         posts_data = []
-        # users = Users.objects.all()
         posts = Posts.objects.all().order_by("-created_at")
 
         for post in posts:
-            # serializer = PostSerializer(post)
             likes = PostLike.objects.filter(post=post)
             num_likes = likes.count()
             liked = likes.filter(user=active_user).exists()
@@ -157,3 +161,41 @@ def all_posts(request):
         if request.user.is_authenticated:
             like_post(request, post=post, active_user=active_user)
             return redirect('all_posts')
+
+
+@login_required(login_url='/')
+@csrf_exempt
+def tagged_posts(request, tag_name):
+    active_user = Users.objects.get(username=request.user.username)
+
+    if request.method == "GET":
+
+        posts_data = []
+        posts = Posts.objects.filter(tags__name=tag_name).order_by("-created_at")
+
+        for post in posts:
+            likes = PostLike.objects.filter(post=post)
+            num_likes = likes.count()
+            liked = likes.filter(user=active_user).exists()
+
+            post_data = {
+                "user_id": post.user.user_id,
+                "post_id": post.post_id,
+                "username": post.user.username,
+                "description": post.description,
+                "images": post.images.all,
+                "created_at": post.created_at_formatted(),
+                "post_liked": liked,
+                "num_likes": num_likes,
+                "active_user": active_user
+            }
+            posts_data.append(post_data)
+
+        return render(request, "allPosts.html", {"posts_data": posts_data, "active_user": active_user})
+
+    elif request.method == "POST":
+        post_id = request.POST.get('post_id')
+        post = Posts.objects.get(post_id=post_id)
+        if request.user.is_authenticated:
+            like_post(request, post=post, active_user=active_user)
+            return HttpResponseRedirect(request.path_info)

@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+from taggit.managers import TaggableManager
+
 from UserApp.models import Users
 
 import humanize
@@ -13,6 +15,7 @@ class Posts(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField()
     user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='name')
+    tags = TaggableManager()
 
     objects = models.Manager()
 
