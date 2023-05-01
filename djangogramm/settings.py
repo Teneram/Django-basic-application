@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "django_cleanup.apps.CleanupConfig",  # added to manage mediafiles
     'humanize',
     'taggit',
+    'crispy_forms',
+    "crispy_bootstrap4",
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -165,3 +167,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 PASSWORD_RESET_TIMEOUT = 14400
+
+# Crispy Forms settings
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
+
+CRISPY_TEMPLATE_PACK = "bootstrap4"

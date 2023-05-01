@@ -1,159 +1,156 @@
-import json
-from http import HTTPStatus
+{% extends "base.html" %}
 
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.http.response import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import status
+{% block content %}
 
-from PostApp.serializers import PostSerializer
-from UserApp.models import Users
+{% load static %}
 
-from .models import PostImages, PostLike, Posts
+<div class="container pt-1 pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-7 text-center">
+      <h4 class="font-weight-bold py-3 mb-4">
+        Account settings
+      </h4>
+      <div class="card overflow-hidden mx-auto">
+        <div class="row no-gutters row-bordered row-border-light justify-content-center">
+          <div class="col-md-9">
+            <div class="tab-content">
+              <div class="tab-pane fade active show" id="account-general">
+                <div class="card-body media align-items-center">
+                  <img src="{{ user.avatar }}" alt="" width="250" height="250">
 
-# Create your views here.
+                  <div class="media-body ml-4">
+                    <form id="user-form" method="post" enctype="multipart/form-data">
+                      {% csrf_token %}
+                      <label class="btn btn-outline-primary">
+                        <input type="file" class="account-settings-fileinput" name="avatar" accept="image/*">
+                      </label>
 
+                      <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control mb-1" name="username" value="{{ user.username }}">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">E-mail</label>
+                        <input type="text" class="form-control mb-1" name="email" value="{{ user.email }}">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Biography</label>
+                        <textarea class="form-control" name="biography">{{ user.biography }}</textarea>
+                      </div>
+                      <div style="margin-bottom: 20px;">
+                        <a href="{% url 'password_change' %}">Change password?</a>
+                      </div>
 
-@login_required(login_url='/')
-@csrf_exempt
-def user_posts(request, user_id):
-    if request.method == "GET":
-        current_user = Users.objects.get(username=request.user.username)
-        user = get_object_or_404(Users, user_id=user_id)
-        posts = Posts.objects.filter(user=user).order_by("-created_at")
-        serializer = PostSerializer(posts, many=True)
-        return render(
-            request, "userPosts.html", {"posts": serializer.data, "user": user, "current_user": current_user}
-        )
+                      <button type="submit" class="btn btn-primary" id="save-button">Save changes</button>
+                    </form>
+                  </div>
+                </div>
+                <hr class="border-light m-0">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<script>
+  const form = document.querySelector('#user-form');
+  const saveButton = document.querySelector('#save-button');
 
-@login_required(login_url='/')
-@csrf_exempt
-def user_posts_create(request, user_id):
-    user = get_object_or_404(Users, user_id=user_id)
+  saveButton.addEventListener('click', (event) => {
+    event.preventDefault();
 
-    if request.user.username != user.username:
-        return redirect('user_posts', user_id=user.user_id)
+    const formData = new FormData(form);
+    const userId = "{{ user.user_id }}";
 
-    if request.method == "GET":
-        return render(request, "createPost.html", {"user": user})
+    fetch(`/users/${userId}/edit`, {
+      method: 'PATCH',
+      body: formData,
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      },
+    })
+      .then(response => {
+        if (response.ok) {
+          // Redirect to the profile page after changes
+          window.location.href = "{% url 'user_profile' user.user_id%}";
+        } else {
+          // handle error
+        }
+      });{% extends "base.html" %}
 
-    elif request.method == "POST":
-        post = Posts(user=user, description=request.POST["description"])
-        post.save()
+{% block content %}
 
-        # Save post images
-        images = request.FILES.getlist("images")
-        for image in images:
-            post_image = PostImages(post=post, image=image)
-            post_image.save()
-        return redirect(f"/users/{user.user_id}/posts")
+{% load static %}
 
-
-@login_required(login_url='/')
-@csrf_exempt
-def user_post_details(request, user_id, post_id):
-    try:
-        post = Posts.objects.get(post_id=post_id, user_id=user_id)
-        user = Users.objects.get(user_id=user_id)
-    except Posts.DoesNotExist:
-        return JsonResponse(
-            {"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND
-        )
-    active_user = Users.objects.get(username=request.user.username)
-
-    if request.method == "GET":
-        post = get_object_or_404(Posts, post_id=post_id, user_id=user_id)
-        serializer = PostSerializer(post)
-
-        likes = PostLike.objects.filter(post=post)
-        num_likes = likes.count()
-        liked = likes.filter(user=active_user).exists()
-
-        return render(request, "userPost.html", {
-            "post": serializer.data,
-            "user": user,
-            "post_liked": liked,
-            "post_counter": post,
-            "num_likes": num_likes,
-            "data": post.created_at_formatted(),
-        })
-
-    elif request.method == "POST":
-        if request.user.is_authenticated:
-            like_post(request, post=post, user_id=user_id, post_id=post_id, active_user=active_user)
-            return redirect('user_post_details', user_id=user_id, post_id=post_id)
-
-    elif request.method == "PATCH":
-        data = json.loads(request.body)
-        serializer = PostSerializer(post, data=data, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == "DELETE":
-        post.delete()
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)
+{% if messages %}
+<div class="alert alert-info">
+  <ul style="list-style:none;">
+    {% for message in messages %}
+    <li>{{ message | striptags }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 
 
-@login_required(login_url='/')
-# def like_post(request, active_user, user_id=None, post_id=None):
-def like_post(request, post, active_user, user_id=None, post_id=None):
-    # post = get_object_or_404(Posts, post_id=post_id, user_id=user_id)
-    print("Entered like post function")
-    try:
-        post_like = PostLike.objects.get(post=post, user=active_user)
-        post_like.delete()
-    except PostLike.DoesNotExist:
-        post_like = PostLike.objects.create(post=post, user=active_user)
-        post_like.save()
+<body class="text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+      <symbol id="check2" viewBox="0 0 16 16">
+        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"></path>
+      </symbol>
+      <symbol id="circle-half" viewBox="0 0 16 16">
+        <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"></path>
+      </symbol>
+      <symbol id="moon-stars-fill" viewBox="0 0 16 16">
+        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"></path>
+        <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"></path>
+      </symbol>
+      <symbol id="sun-fill" viewBox="0 0 16 16">
+        <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"></path>
+      </symbol>
+    </svg>
 
-    if post_id or user_id:
-        return redirect('user_post_details', user_id=user_id, post_id=post_id)
-    else:
-        return redirect('home')
+  <main class="form-signin w-100 m-auto">
+    <form method="post">
+      {% csrf_token %}
+      <img src="{% static 'images/djangogramm.png' %}" alt="" width="100" height="100" style="margin-top: 30px; margin-bottom: 30px;">
+      <h1 class="h3 mb-3 fw-normal">Please log in</h1>
 
+      <div class="d-flex justify-content-center">
+        <div style="width: 30%;">
+            <div class="form-floating">
+                <input type="text" class="form-control" id="floatingInput" placeholder="name@example.com" name="username"">
+                <label for="floatingInput">Username</label>
+            </div>
+            <div class="form-floating">
+                <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password">
+                <label for="floatingPassword">Password</label>
+            </div>
+        </div>
+      </div>
 
-@login_required(login_url='/')
-@csrf_exempt
-def all_posts(request):
-    active_user = Users.objects.get(username=request.user.username)
+      <div class="d-flex justify-content-center my-3">
+        <button class="btn btn-lg btn-primary" type="submit" style="width: 30%;">Log in</button>
+      </div>
 
-    if request.method == "GET":
+    </form>
 
-        posts_data = []
-        # users = Users.objects.all()
-        posts = Posts.objects.all().order_by("-created_at")
+    <div class="d-flex justify-content-center my-3">
+      <a href="/registration" class="btn btn-lg btn-secondary" style="width: 20%;">Create new account</a>
+    </div>
 
-        for post in posts:
-            # serializer = PostSerializer(post)
-            likes = PostLike.objects.filter(post=post)
-            num_likes = likes.count()
-            liked = likes.filter(user=active_user).exists()
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'password_reset' %}">Forgot password?</a>
+    </div>
 
-            post_data = {
-                "user_id": post.user.user_id,
-                "post_id": post.post_id,
-                "username": post.user.username,
-                "description": post.description,
-                "images": post.images.all,
-                "created_at": post.created_at_formatted(),
-                "post_liked": liked,
-                "num_likes": num_likes,
-                "active_user": active_user
-            }
-            posts_data.append(post_data)
+</body>
 
-        return render(request, "allPosts.html", {"posts_data": posts_data, "active_user": active_user})
+{% endblock %}
 
-    elif request.method == "POST":
-        post_id = request.POST.get('post_id')
-        post = Posts.objects.get(post_id=post_id)
-        if request.user.is_authenticated:
-            like_post(request, post=post, active_user=active_user)
-            return redirect('all_posts')
+  });
+</script>
+
+{% endblock %}
