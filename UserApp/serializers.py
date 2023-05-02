@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from django.core.validators import validate_email
+
 from UserApp.models import Users
 
 
@@ -37,7 +39,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False)
     password = serializers.CharField(required=False)
-    email = serializers.EmailField(required=False)
+    email = serializers.EmailField(required=False, validators=[validate_email])
     avatar = serializers.ImageField(required=False)
     biography = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 

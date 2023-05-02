@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
@@ -196,19 +197,40 @@ def edit_profile(request, id):
     elif request.method == "PATCH":
         data = request.data
         avatar = request.FILES.get("avatar")
-        user_serializer = UserUpdateSerializer(user, data=data)
 
-        if user_serializer.is_valid():
-            user_serializer.save()
-            if avatar:
-                user.avatar = avatar
-                user.save()
-            return JsonResponse({"success": True})
+        # update both models
+        user_serializer = UserUpdateSerializer(request.user, data=data)
+        users_serializer = UserUpdateSerializer(user, data=data)
+
+        if user_serializer.is_valid() and users_serializer.is_valid():
+            try:
+                user_serializer.save()
+                users_serializer.save()
+
+                if avatar:
+                    user.avatar = avatar
+                    user.save()
+                messages.success(request, 'Profile data was updated')
+                return JsonResponse({"success": True})
+
+            except IntegrityError as e:
+                error_message = str(e)
+                if "unique constraint" in error_message:
+                    if "UserApp_users_Email_cc414933_uniq" in error_message:
+                        messages.error(request, "This email is already in use.")
+                    elif "auth_user_username_key" in error_message:
+                        messages.error(request, "This username is already in use.")
+                    else:
+                        messages.error(request, "An unknown error occurred.")
+                else:
+                    messages.error(request, "An unknown error occurred.")
+                return JsonResponse({"success": False})
 
         else:
-            return JsonResponse(
-                user_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
+            for key, error_list in user_serializer.errors.items():
+                for error in error_list:
+                    messages.error(request, f"Error: {error}")
+                    return JsonResponse({"success": False})
 
 
 @login_required
