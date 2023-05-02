@@ -10,7 +10,7 @@ class Users(models.Model):
     email = models.EmailField(blank=True, unique=True)
     is_registered = models.BooleanField(default=False)
     avatar = models.ImageField(
-        upload_to="profile_images", default="Media/profile_images/default_avatar.png"
+        upload_to="profile_images", default="profile_images/default_avatar.png"
     )
     biography = models.TextField()
 
