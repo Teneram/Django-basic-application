@@ -12,7 +12,7 @@ from .models import Users
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate, get_user_model
-from .forms import SignupForm, UserLoginForm, SetPasswordForm, PasswordResetForm
+from .forms import SignupForm, UserLoginForm, CustomSetPasswordForm, PasswordResetForm, ChangePasswordForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -237,7 +237,7 @@ def edit_profile(request, id):
 def password_change(request):
     user = request.user
     if request.method == 'POST':
-        form = SetPasswordForm(user, request.POST)
+        form = ChangePasswordForm(user, request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Your password has been changed")
@@ -246,8 +246,8 @@ def password_change(request):
             for error in list(form.errors.values()):
                 messages.error(request, error)
 
-    form = SetPasswordForm(user)
-    return render(request, 'password_reset_confirm.html', {'form': form})
+    form = ChangePasswordForm(user)
+    return render(request, 'password_change_confirm.html', {'form': form})
 
 
 @user_not_authenticated
@@ -284,11 +284,6 @@ def password_reset_request(request):
 
             return redirect('users_list')
 
-        for key, error in list(form.errors.items()):
-            if key == 'captcha' and error[0] == 'This field is required.':
-                messages.error(request, "You must pass the reCAPTCHA test")
-                continue
-
     form = PasswordResetForm()
     return render(
         request=request,
@@ -307,7 +302,7 @@ def passwordResetConfirm(request, uidb64, token):
 
     if user is not None and account_activation_token.check_token(user, token):
         if request.method == 'POST':
-            form = SetPasswordForm(user, request.POST)
+            form = CustomSetPasswordForm(user, request.POST)
             if form.is_valid():
                 form.save()
                 messages.success(request, "Your password has been set. You may go ahead and <b>log in </b> now.")
@@ -316,8 +311,36 @@ def passwordResetConfirm(request, uidb64, token):
                 for error in list(form.errors.values()):
                     messages.error(request, error)
 
-        form = SetPasswordForm(user)
+        form = CustomSetPasswordForm(user)
         return render(request, 'password_reset_confirm.html', {'form': form})
+    else:
+        messages.error(request, "Link is expired")
+
+    messages.error(request, 'Something went wrong, redirecting back to Homepage')
+    return redirect("users_list")
+
+
+def passwordChangeConfirm(request, uidb64, token):
+    User = get_user_model()
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except:
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        if request.method == 'POST':
+            form = ChangePasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your password has been set. You may go ahead and <b>log in </b> now.")
+                return redirect('users_list')
+            else:
+                for error in list(form.errors.values()):
+                    messages.error(request, error)
+
+        form = ChangePasswordForm(user)
+        return render(request, 'password_change_confirm.html', {'form': form})
     else:
         messages.error(request, "Link is expired")
 

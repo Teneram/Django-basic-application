@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, SetP
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate
 
 
 class SignupForm(UserCreationForm):
@@ -51,7 +52,21 @@ class UserLoginForm(AuthenticationForm):
         attrs={'class': 'form-control', 'placeholder': 'Password'}))
 
 
-class SetPasswordForm(SetPasswordForm):
+class ChangePasswordForm(SetPasswordForm):
+    current_password = forms.CharField(label='Current Password', widget=forms.PasswordInput)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = self.user
+
+        current_password = cleaned_data.get("current_password")
+        if not authenticate(username=user.username, password=current_password):
+            raise forms.ValidationError("Current password is incorrect.")
+
+        return cleaned_data
+
+
+class CustomSetPasswordForm(SetPasswordForm):
     class Meta:
         model = get_user_model()
         fields = ['new_password1', 'new_password2']
