@@ -1,11 +1,9 @@
+import humanize
 from django.db import models
 from django.utils import timezone
-
 from taggit.managers import TaggableManager
 
 from UserApp.models import Users
-
-import humanize
 
 # Create your models here.
 

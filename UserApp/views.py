@@ -1,28 +1,28 @@
+from django.contrib import messages
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import EmailMessage
 from django.db import IntegrityError
+from django.db.models.query_utils import Q
+from django.http import HttpResponse
 from django.http.response import JsonResponse
+from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 
-from UserApp.serializers import UserSerializer, UserUpdateSerializer
-
-from .models import Users
-
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate, get_user_model
-from .forms import SignupForm, UserLoginForm, CustomSetPasswordForm, PasswordResetForm, ChangePasswordForm
-from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.template.loader import render_to_string
-from UserApp.tokens import account_activation_token
-from django.core.mail import EmailMessage
-from django.contrib import messages
 from UserApp.decorators import user_not_authenticated
-from django.contrib.auth.decorators import login_required
-from django.db.models.query_utils import Q
+from UserApp.serializers import UserSerializer, UserUpdateSerializer
+from UserApp.tokens import account_activation_token
+
+from .forms import (ChangePasswordForm, CustomSetPasswordForm,
+                    PasswordResetForm, SignupForm, UserLoginForm)
+from .models import Users
 
 # Create your views here.
 
