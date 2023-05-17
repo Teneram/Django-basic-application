@@ -8,12 +8,13 @@ from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from taggit.models import Tag
 
 from PostApp.serializers import PostSerializer
 from UserApp.models import Users
 
-from .models import PostImages, PostLike, Posts
+from .models import Posts
+
+from PostApp.services import PostsService, PostImagesService, PostLikeService
 
 # Create your views here.
 
@@ -22,9 +23,9 @@ from .models import PostImages, PostLike, Posts
 @csrf_exempt
 def user_posts(request, user_id):
     if request.method == "GET":
-        current_user = Users.objects.get(username=request.user.username)
         user = get_object_or_404(Users, user_id=user_id)
-        posts = Posts.objects.filter(user=user).order_by("-created_at")
+        current_user = PostsService.get_user_by_username(username=request.user.username)
+        posts = PostsService.get_filtered_posts(post_order="-created_at", user=user)
         serializer = PostSerializer(posts, many=True)
         return render(
             request, "userPosts.html", {"posts": serializer.data, "user": user, "current_user": current_user}
@@ -44,42 +45,35 @@ def user_posts_create(request, user_id):
 
     elif request.method == "POST":
         description = request.POST["description"]
-        post = Posts(user=user, description=description)
-        post.save()
+        post = PostsService.create_user_post(user=user, description=description)
+        PostsService.save_post(post)
 
         hashtags = re.findall(r'#(\w+)', description)
-
-        for tag_name in hashtags:
-            tag, created = Tag.objects.get_or_create(name=tag_name)
-            post.tags.add(tag)
+        PostsService.add_tags(post, hashtags)
 
         # Save post images
         images = request.FILES.getlist("images")
         for image in images:
-            post_image = PostImages(post=post, image=image)
-            post_image.save()
+            post_image = PostImagesService.get_image(post, image)
+            PostImagesService.save_image(post_image)
+
         return redirect(f"/users/{user.user_id}/posts")
 
 
 @login_required(login_url='/')
 @csrf_exempt
 def user_post_details(request, user_id, post_id):
-    try:
-        post = Posts.objects.get(post_id=post_id, user_id=user_id)
-        user = Users.objects.get(user_id=user_id)
-    except Posts.DoesNotExist:
-        return JsonResponse(
-            {"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND
-        )
-    active_user = Users.objects.get(username=request.user.username)
+    post = PostsService.get_post(post_id, user_id)
+    user = PostsService.get_user_by_id(user_id)
+    active_user = PostsService.get_user_by_username(request.user.username)
 
     if request.method == "GET":
         post = get_object_or_404(Posts, post_id=post_id, user_id=user_id)
         serializer = PostSerializer(post)
 
-        likes = PostLike.objects.filter(post=post)
+        likes = PostLikeService.get_post_likes(post)
         num_likes = likes.count()
-        liked = likes.filter(user=active_user).exists()
+        liked = PostLikeService.is_liked(likes, active_user)
 
         return render(request, "userPost.html", {
             "post": serializer.data,
@@ -106,18 +100,13 @@ def user_post_details(request, user_id, post_id):
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == "DELETE":
-        post.delete()
+        PostsService.delete_post(post)
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
 
 @login_required(login_url='/')
 def like_post(request, post, active_user, user_id=None, post_id=None):
-    try:
-        post_like = PostLike.objects.get(post=post, user=active_user)
-        post_like.delete()
-    except PostLike.DoesNotExist:
-        post_like = PostLike.objects.create(post=post, user=active_user)
-        post_like.save()
+    PostsService.like_post(post, active_user)
 
     if post_id or user_id:
         return redirect('user_post_details', user_id=user_id, post_id=post_id)
@@ -128,17 +117,17 @@ def like_post(request, post, active_user, user_id=None, post_id=None):
 @login_required(login_url='/')
 @csrf_exempt
 def all_posts(request):
-    active_user = Users.objects.get(username=request.user.username)
+    active_user = PostsService.get_user_by_username(request.user.username)
 
     if request.method == "GET":
 
         posts_data = []
-        posts = Posts.objects.all().order_by("-created_at")
+        posts = PostsService.get_all_posts(post_order="-created_at")
 
         for post in posts:
-            likes = PostLike.objects.filter(post=post)
+            likes = PostLikeService.get_post_likes(post)
             num_likes = likes.count()
-            liked = likes.filter(user=active_user).exists()
+            liked = PostLikeService.is_liked(likes, active_user)
 
             post_data = {
                 "user_id": post.user.user_id,
@@ -157,7 +146,8 @@ def all_posts(request):
 
     elif request.method == "POST":
         post_id = request.POST.get('post_id')
-        post = Posts.objects.get(post_id=post_id)
+        post = PostsService.get_post(post_id=post_id)
+
         if request.user.is_authenticated:
             like_post(request, post=post, active_user=active_user)
             return redirect('all_posts')
@@ -166,17 +156,17 @@ def all_posts(request):
 @login_required(login_url='/')
 @csrf_exempt
 def tagged_posts(request, tag_name):
-    active_user = Users.objects.get(username=request.user.username)
+    active_user = PostsService.get_user_by_username(request.user.username)
 
     if request.method == "GET":
 
         posts_data = []
-        posts = Posts.objects.filter(tags__name=tag_name).order_by("-created_at")
+        posts = PostsService.get_filtered_posts(post_order="-created_at", tags__name=tag_name)
 
         for post in posts:
-            likes = PostLike.objects.filter(post=post)
+            likes = PostLikeService.get_post_likes(post)
             num_likes = likes.count()
-            liked = likes.filter(user=active_user).exists()
+            liked = PostLikeService.is_liked(likes, active_user)
 
             post_data = {
                 "user_id": post.user.user_id,
@@ -195,7 +185,7 @@ def tagged_posts(request, tag_name):
 
     elif request.method == "POST":
         post_id = request.POST.get('post_id')
-        post = Posts.objects.get(post_id=post_id)
+        post = PostsService.get_post(post_id=post_id)
         if request.user.is_authenticated:
             like_post(request, post=post, active_user=active_user)
             return HttpResponseRedirect(request.path_info)

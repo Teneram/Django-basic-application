@@ -1,28 +1,24 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import EmailMessage
 from django.db import IntegrityError
-from django.db.models.query_utils import Q
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
-from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 
 from UserApp.decorators import user_not_authenticated
-from UserApp.serializers import UserSerializer, UserUpdateSerializer
+from UserApp.serializers import UserSerializer
 from UserApp.tokens import account_activation_token
 
-from .forms import (ChangePasswordForm, CustomSetPasswordForm,
-                    PasswordResetForm, SignupForm, UserLoginForm)
-from .models import Users
+from UserApp.forms import (ChangePasswordForm, CustomSetPasswordForm,
+                           PasswordResetForm, SignupForm, UserLoginForm)
+from UserApp.services import UsersService
 
 # Create your views here.
 
@@ -45,7 +41,6 @@ def home(request):
         else:
             for key, error in list(form.errors.items()):
                 messages.error(request, error)
-
     form = UserLoginForm()
 
     return render(
@@ -59,32 +54,18 @@ def registration(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            # create new user object and set attributes
             user = form.save(commit=False)
             user.is_active = False
             user.save()
 
             # create new Users object and copy relevant data
-            user_app = Users.objects.create(
-                username=form.cleaned_data['username'],
-                email=form.cleaned_data['email'],
-                password=form.cleaned_data['password1']
-            )
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password1']
+            user_app = UsersService.register_user(username, email, password)
 
             # send activation email
-            current_site = get_current_site(request)
-            mail_subject = 'Activation link has been sent to your email id'
-            message = render_to_string('acc_active_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-            to_email = form.cleaned_data.get('email')
-            email = EmailMessage(
-                        mail_subject, message, to=[to_email]
-            )
-            email.send()
+            UsersService.send_activation_email(request=request, user=user, form=form)
             messages.success(request, 'Please confirm your email address to complete the registration')
             return redirect('home')
 
@@ -99,18 +80,16 @@ def registration(request):
 
 
 def activate(request, uidb64, token):
-    User = get_user_model()
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = UsersService.get_auth_user_by_id(uid)
+    except (TypeError, ValueError, OverflowError):
         user = None
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
         messages.success(request, 'Thank you for your email confirmation. Now you can login your account.')
         return redirect('home')
-
     else:
         return HttpResponse('Activation link is invalid!')
 
@@ -119,18 +98,9 @@ def activate(request, uidb64, token):
 @csrf_exempt
 def users(request):
     if request.method == "GET":
-
-        # Retrieve the search query from the URL query parameters
         search_query = request.GET.get('search')
-
-        # Query the database to filter users based on the search query
-        if search_query:
-            users_all = Users.objects.filter(username__icontains=search_query)
-        else:
-            users_all = Users.objects.all()
-
-        # users_all = Users.objects.all()
-        current_user = Users.objects.get(username=request.user.username)
+        users_all = UsersService.get_all_users(search_query)
+        current_user = UsersService.get_user_by_username(request.user.username)
         users_serializer = UserSerializer(users_all, many=True)
 
         return render(request, "users.html", {"users": users_serializer.data, "current_user": current_user})
@@ -145,31 +115,17 @@ def custom_logout(request):
 
 @login_required(login_url='/')
 @csrf_exempt
-@api_view(["GET", "PATCH", "DELETE"])
+@api_view(["GET", "DELETE"])
 @parser_classes([MultiPartParser])
 def user_profile(request, id):
-    try:
-        user = Users.objects.get(user_id=id)
-    except Users.DoesNotExist:
-        return JsonResponse(
-            {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
-        )
+    user = UsersService.get_user_by_id(user_id=id)
 
     if request.method == "GET":
         user_serializer = UserSerializer(user)
         return render(request, "userProfile.html", {"user": user_serializer.data})
 
     elif request.method == "DELETE":
-        User = get_user_model()
-        try:
-            auth_user = User.objects.get(username=user.username)
-        except User.DoesNotExist:
-            auth_user = None
-
-        user.delete()
-        if auth_user:
-            auth_user.delete()
-
+        UsersService.delete_user(user)
         return JsonResponse(
             {"message": "Deleted successfully"}, status=status.HTTP_204_NO_CONTENT
         )
@@ -180,12 +136,7 @@ def user_profile(request, id):
 @api_view(["GET", "PATCH"])
 @parser_classes([MultiPartParser])
 def edit_profile(request, id):
-    try:
-        user = Users.objects.get(user_id=id)
-    except Users.DoesNotExist:
-        return JsonResponse(
-            {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
-        )
+    user = UsersService.get_user_by_id(user_id=id)
 
     if request.user.username != user.username:
         return redirect('user_profile', id=user.user_id)
@@ -198,39 +149,23 @@ def edit_profile(request, id):
         data = request.data
         avatar = request.FILES.get("avatar")
 
-        # update both models
-        user_serializer = UserUpdateSerializer(request.user, data=data)
-        users_serializer = UserUpdateSerializer(user, data=data)
+        try:
+            UsersService.update_user(request, user, data, avatar)
+            messages.success(request, 'Profile data was updated')
+            return JsonResponse({"success": True})
 
-        if user_serializer.is_valid() and users_serializer.is_valid():
-            try:
-                user_serializer.save()
-                users_serializer.save()
-
-                if avatar:
-                    user.avatar = avatar
-                    user.save()
-                messages.success(request, 'Profile data was updated')
-                return JsonResponse({"success": True})
-
-            except IntegrityError as e:
-                error_message = str(e)
-                if "unique constraint" in error_message:
-                    if "UserApp_users_Email_cc414933_uniq" in error_message:
-                        messages.error(request, "This email is already in use.")
-                    elif "auth_user_username_key" in error_message:
-                        messages.error(request, "This username is already in use.")
-                    else:
-                        messages.error(request, "An unknown error occurred.")
+        except IntegrityError as e:
+            error_message = str(e)
+            if "unique constraint" in error_message:
+                if "UserApp_users_Email_cc414933_uniq" in error_message:
+                    messages.error(request, "This email is already in use.")
+                elif "auth_user_username_key" in error_message:
+                    messages.error(request, "This username is already in use.")
                 else:
                     messages.error(request, "An unknown error occurred.")
-                return JsonResponse({"success": False})
-
-        else:
-            for key, error_list in user_serializer.errors.items():
-                for error in error_list:
-                    messages.error(request, f"Error: {error}")
-                    return JsonResponse({"success": False})
+            else:
+                messages.error(request, "An unknown error occurred.")
+            return JsonResponse({"success": False})
 
 
 @login_required
@@ -256,34 +191,8 @@ def password_reset_request(request):
         form = PasswordResetForm(request.POST)
         if form.is_valid():
             user_email = form.cleaned_data['email']
-            associated_user = get_user_model().objects.filter(Q(email=user_email)).first()
-            if associated_user:
-                subject = "Password Reset request"
-                message = render_to_string("template_reset_password.html", {
-                    'user': associated_user,
-                    'domain': get_current_site(request).domain,
-                    'uid': urlsafe_base64_encode(force_bytes(associated_user.pk)),
-                    'token': account_activation_token.make_token(associated_user),
-                    "protocol": 'https' if request.is_secure() else 'http'
-                })
-                email = EmailMessage(subject, message, to=[associated_user.email])
-                if email.send():
-                    messages.success(
-                        request,
-                        """
-                        <h2>Password reset sent. </h2><hr>
-                        <p>
-                            We've emailed you instructions for setting your password, if an account exists with the email you entered.
-                            You should receive them shortly.<br> If you don't receive an email, please make sure you've entered the address
-                            you registered with, and check your spam folder.
-                        </p>
-                        """
-                                     )
-                else:
-                    messages.error(request, "Problem sending reset password email, <b>SERVER PROBLEM</b>")
-
+            UsersService.reset_password(request, user_email)
             return redirect('users_list')
-
     form = PasswordResetForm()
     return render(
         request=request,
@@ -293,12 +202,8 @@ def password_reset_request(request):
 
 
 def passwordResetConfirm(request, uidb64, token):
-    User = get_user_model()
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except:
-        user = None
+    uid = force_str(urlsafe_base64_decode(uidb64))
+    user = UsersService.get_auth_user_by_id(uid)
 
     if user is not None and account_activation_token.check_token(user, token):
         if request.method == 'POST':
@@ -321,12 +226,8 @@ def passwordResetConfirm(request, uidb64, token):
 
 
 def passwordChangeConfirm(request, uidb64, token):
-    User = get_user_model()
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except:
-        user = None
+    uid = force_str(urlsafe_base64_decode(uidb64))
+    user = UsersService.get_auth_user_by_id(uid)
 
     if user is not None and account_activation_token.check_token(user, token):
         if request.method == 'POST':
