@@ -1,15 +1,21 @@
-from typing import List
+from typing import List, Union
 
+from django.db.models.query import QuerySet
+from django.http import JsonResponse
 from taggit.models import Tag
 
-from PostApp.repositories import PostsRepository, PostImagesRepository, PostLikeRepository
-from PostApp.models import Posts, PostLike, PostImages
+from PostApp.models import PostImages, PostLike, Posts
+from PostApp.repositories import (
+    PostImagesRepository,
+    PostLikeRepository,
+    PostsRepository,
+)
+from UserApp.models import Users
 
 
 class PostsService:
-
     @staticmethod
-    def get_post(post_id, user_id=None):
+    def get_post(post_id: int, user_id: int = None):
         if user_id:
             return PostsRepository.get(post_id, user_id)
         else:
@@ -24,23 +30,23 @@ class PostsService:
         PostsRepository.delete(post)
 
     @staticmethod
-    def get_user_by_id(user_id):
+    def get_user_by_id(user_id: int) -> Union[Users, JsonResponse, None]:
         return PostsRepository.get_user(user_id=user_id)
 
     @staticmethod
-    def get_user_by_username(username):
+    def get_user_by_username(username: str) -> Union[Users, JsonResponse, None]:
         return PostsRepository.get_user(username=username)
 
     @staticmethod
-    def get_filtered_posts(post_order, **post_filter):
+    def get_filtered_posts(post_order: str, **post_filter) -> List[Posts]:
         return PostsRepository.posts_filtered(post_order, **post_filter)
 
     @staticmethod
-    def get_all_posts(post_order):
+    def get_all_posts(post_order: str) -> List[Posts]:
         return PostsRepository.all_posts(post_order)
 
     @staticmethod
-    def create_user_post(user, description) -> Posts:
+    def create_user_post(user: Users, description: str) -> Posts:
         return PostsRepository.create(user, description)
 
     @staticmethod
@@ -50,7 +56,7 @@ class PostsService:
             post.tags.add(tag)
 
     @staticmethod
-    def like_post(post, user):
+    def like_post(post: Posts, user: Users) -> None:
         try:
             post_like = PostLikeRepository.get(post, user)
             PostLikeRepository.delete(post_like)
@@ -60,22 +66,20 @@ class PostsService:
 
 
 class PostImagesService:
-
     @staticmethod
-    def get_image(post: Posts, image) -> PostImages:
+    def get_image(post: Posts, image: str) -> PostImages:
         return PostImagesRepository.get(post, image)
 
     @staticmethod
-    def save_image(post_image) -> None:
+    def save_image(post_image: PostImages) -> None:
         PostImagesRepository.save(post_image)
 
 
 class PostLikeService:
-
     @staticmethod
-    def get_post_likes(post):
+    def get_post_likes(post: Posts) -> List[PostLike]:
         return PostLikeRepository.get_filtered_by_post(post)
 
     @staticmethod
-    def is_liked(likes, user) -> bool:
+    def is_liked(likes: QuerySet[PostLike], user: Users) -> bool:
         return likes.filter(user=user).exists()

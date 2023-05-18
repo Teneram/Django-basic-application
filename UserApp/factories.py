@@ -22,7 +22,7 @@ class UserFactory(DjangoModelFactory):
             return f"User-{max_id + 1}"
 
         except Users.DoesNotExist:
-            return f"User-0"
+            return "User-0"
 
     class Meta:
         model = "UserApp.Users"

@@ -25,17 +25,17 @@ SECRET_KEY = "django-insecure-k@fb7pk78bc59qvoauhxv#kmx$57n8l2r6z=28*o0=z0l188jp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ["127.0.0.1"]
 
-STATIC_URL = '/static/'
-MEDIA_URL = '/media/'
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
 
 if DEBUG:
-    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 else:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Application definition
 
@@ -51,9 +51,9 @@ INSTALLED_APPS = [
     "UserApp.apps.UserappConfig",
     "PostApp.apps.PostsappConfig",
     "django_cleanup.apps.CleanupConfig",  # added to manage mediafiles
-    'humanize',
-    'taggit',
-    'crispy_forms',
+    "humanize",
+    "taggit",
+    "crispy_forms",
     "crispy_bootstrap4",
 ]
 
@@ -152,11 +152,11 @@ REST_FRAMEWORK = {
 }
 
 # Emailing settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_FROM = 'kriateddd@gmail.com'
-EMAIL_HOST_USER = 'kriateddd@gmail.com'
-EMAIL_HOST_PASSWORD = 'qbcpoghqiuptsfsz'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_FROM = "kriateddd@gmail.com"
+EMAIL_HOST_USER = "kriateddd@gmail.com"
+EMAIL_HOST_PASSWORD = "qbcpoghqiuptsfsz"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 

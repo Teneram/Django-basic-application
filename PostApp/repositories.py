@@ -1,12 +1,11 @@
 from django.http.response import JsonResponse
 from rest_framework import status
 
-from PostApp.models import Posts, PostImages, PostLike
+from PostApp.models import PostImages, PostLike, Posts
 from UserApp.models import Users
 
 
 class PostsRepository:
-
     @staticmethod
     def get(post_id, user_id=None) -> Posts | JsonResponse:
         try:
@@ -32,7 +31,7 @@ class PostsRepository:
         return Posts(user=user, description=description)
 
     @staticmethod
-    def get_user(user_id=None, username=None) -> Users | JsonResponse:
+    def get_user(user_id=None, username=None) -> Users | JsonResponse | None:
         try:
             if user_id:
                 return Users.objects.get(user_id=user_id)
@@ -44,6 +43,8 @@ class PostsRepository:
                 {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
+        return None
+
     @staticmethod
     def posts_filtered(post_order, **post_filter):
         return Posts.objects.filter(**post_filter).order_by(post_order)
@@ -54,7 +55,6 @@ class PostsRepository:
 
 
 class PostImagesRepository:
-
     @staticmethod
     def get(post: Posts, image) -> PostImages:
         return PostImages(post=post, image=image)
@@ -65,7 +65,6 @@ class PostImagesRepository:
 
 
 class PostLikeRepository:
-
     @staticmethod
     def get(post, user):
         return PostLike.objects.get(post=post, user=user)
@@ -85,8 +84,3 @@ class PostLikeRepository:
     @staticmethod
     def delete(post_like):
         post_like.delete()
-
-
-
-
-

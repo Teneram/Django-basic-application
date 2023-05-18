@@ -12,10 +12,10 @@ class Posts(models.Model):
     post_id = models.AutoField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField()
-    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='name')
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="name")
     tags = TaggableManager()
 
-    objects = models.Manager()
+    objects: models.Manager = models.Manager()
 
     def created_at_formatted(self):
         time_current = timezone.localtime(timezone.now())
@@ -39,13 +39,13 @@ class Posts(models.Model):
 
 
 class PostLike(models.Model):
-    post = models.ForeignKey(Posts, on_delete=models.CASCADE, related_name='likes')
-    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='likes')
+    post = models.ForeignKey(Posts, on_delete=models.CASCADE, related_name="likes")
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="likes")
 
-    objects = models.Manager()
+    objects: models.Manager = models.Manager()
 
     class Meta:
-        unique_together = ('post', 'user')
+        unique_together = ("post", "user")
 
 
 class PostImages(models.Model):
@@ -53,7 +53,7 @@ class PostImages(models.Model):
     image = models.ImageField()
     post = models.ForeignKey(Posts, on_delete=models.CASCADE, related_name="images")
 
-    objects = models.Manager()
+    objects: models.Manager = models.Manager()
 
     def to_dict(self):
         return {"image": self.image}

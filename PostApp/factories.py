@@ -5,7 +5,6 @@ import random
 import factory.fuzzy
 import pytz
 from django.core.files import File
-from factory import Faker
 from faker import Faker
 from PIL import Image
 

@@ -6,4 +6,4 @@ class UserappConfig(AppConfig):
     name = "UserApp"
 
     def ready(self):
-        import UserApp.signals
+        import UserApp.signals  # noqa

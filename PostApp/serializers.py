@@ -15,7 +15,7 @@ class PostImageSerializer(serializers.ModelSerializer):
             "image",
         )
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: PostImages) -> dict:
         """Custom representation of the PostImage object."""
         data = super().to_representation(instance)
         if instance.image:
@@ -31,14 +31,14 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ("post_id", "created_at", "description", "user", "images")
         read_only_fields = ("post_id", "created_at", "user")
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict) -> dict:
         """Custom validation for the PostSerializer."""
         images_data = attrs.get("images")
         if images_data and len(images_data) > 10:
             raise serializers.ValidationError("Cannot upload more than 10 images.")
         return attrs
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> dict:
         user_id = self.context.get("user_id")
         user = get_object_or_404(Users, user_id=user_id)
         images_data = validated_data.pop("images", None)
@@ -50,17 +50,16 @@ class PostSerializer(serializers.ModelSerializer):
 
         return post.to_dict()
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Posts, validated_data: dict) -> Posts:
         """Custom update logic for the PostSerializer."""
 
         # Update post description
         instance.description = validated_data.get("description", instance.description)
 
         # Update post tags based on the updated description
-        hashtags = re.findall(r'#(\w+)', instance.description)
+        hashtags = re.findall(r"#(\w+)", instance.description)
         instance.tags.set(hashtags)
 
         instance.save()
 
         return instance
-

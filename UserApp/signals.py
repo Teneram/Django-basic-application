@@ -5,7 +5,7 @@ from .models import Users
 
 
 @receiver(post_save, sender=Users)
-def set_user_registered(sender, instance, created, **kwargs):
+def set_user_registered(sender, instance: Users, created: bool, **kwargs):
     if created:
         instance.is_registered = True
         instance.save()

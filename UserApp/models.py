@@ -14,4 +14,4 @@ class Users(models.Model):
     )
     biography = models.TextField()
 
-    objects = models.Manager()
+    objects: models.Manager = models.Manager()
