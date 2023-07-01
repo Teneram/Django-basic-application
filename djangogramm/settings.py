@@ -48,8 +48,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
-    "UserApp.apps.UserappConfig",
-    "PostApp.apps.PostsappConfig",
+    "user_app.apps.UserappConfig",
+    "post_app.apps.PostsappConfig",
     "django_cleanup.apps.CleanupConfig",  # added to manage mediafiles
     "humanize",
     "taggit",
